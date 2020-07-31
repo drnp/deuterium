@@ -1,0 +1,7 @@
+go.sum
+*.json
+.idea
+bin/
+recybin/
+test.go
+*.gz

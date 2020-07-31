@@ -1,0 +1,39 @@
+version: "3.7"
+
+# Services
+services: 
+  skel_main:
+    image: "fusion/deuterium:dev"
+    entrypoint: "/opt/fusion/bin/skel_main"
+    networks: 
+      - fusion-net
+    deploy:
+      labels:
+        - traefik.enable=true
+      mode: "replicated"
+      replicas: 3
+      update_config:
+        parallelism: 3
+        delay: 2s
+      restart_policy:
+        condition: on-failure
+
+  skel_node:
+    image: "fusion/deuterium:dev"
+    entrypoint: "/opt/fusion/bin/skel_node"
+    networks: 
+      - fusion-net
+    deploy:
+      labels:
+        - traefik.enable=true
+      mode: "replicated"
+      replicas: 3
+      update_config:
+        parallelism: 3
+        delay: 2s
+      restart_policy:
+        condition: on-failure
+
+networks:
+  fusion-net:
+    external: true
