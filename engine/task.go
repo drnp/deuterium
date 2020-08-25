@@ -48,9 +48,12 @@ func (th *_taskNsqConsumerHandler) HandleMessage(message *nsq.Message) error {
 		return err
 	}
 
-	if msg.Reciever != App().Name {
+	defer message.Finish()
+
+	self := _msgTarget(App().Name)
+	if msg.Reciever != self {
 		// Not you?
-		err = fmt.Errorf("Wrong message reciever")
+		err = fmt.Errorf("Task : Wrong message reciever : Self <%s> / Reciever <%s>", self, msg.Reciever)
 		Logger().Error(err)
 
 		return err
@@ -64,20 +67,7 @@ func (th *_taskNsqConsumerHandler) HandleMessage(message *nsq.Message) error {
 		return err
 	}
 
-	/*
-		ret, err := t(msg)
-		if ret == nil {
-			ret = NewResultMessage(nil, false)
-		}
-
-		if err != nil {
-			Logger().Error(err)
-
-			return err
-		}
-	*/
 	runHandler(h, msg)
-	message.Finish()
 
 	return nil
 }

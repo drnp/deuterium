@@ -34,6 +34,7 @@ package engine
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/golang/snappy"
@@ -46,6 +47,16 @@ const (
 	TaskTopicPrefix   = "_.task_"
 	NotifyTopicPrefix = "_.notify_"
 )
+
+// DistinguishBranch
+var (
+	distinguishBranch bool
+)
+
+// SetDistinguishBranch : Distinguish branch append branch to remote address
+func SetDistinguishBranch(d bool) {
+	distinguishBranch = d
+}
 
 // UniformMessage : Uniform message type for task / RPC / broadcast
 type UniformMessage struct {
@@ -125,9 +136,22 @@ func (msg *UniformMessage) Length() int {
 
 // Service-to-service methods
 
+func _msgTarget(target string) string {
+	if distinguishBranch == true {
+		branch := os.Getenv("BRANCH")
+		if branch == "" {
+			branch = "master"
+		}
+
+		return target + "_" + branch
+	}
+
+	return target
+}
+
 // Call : Synchronously RPC via HTTP2
 func (msg *UniformMessage) Call(reciever, method string) (*ResultMessage, error) {
-	msg.Reciever = reciever
+	msg.Reciever = _msgTarget(reciever)
 	msg.Method = method
 	msg.Sender = App().Name
 	payload, err := msg.Encode()
@@ -154,9 +178,9 @@ func (msg *UniformMessage) Call(reciever, method string) (*ResultMessage, error)
 
 // Task : Asynchronously queue via NSQ
 func (msg *UniformMessage) Task(target, method string) error {
-	msg.Reciever = target
+	msg.Reciever = _msgTarget(target)
 	msg.Method = method
-	msg.Sender = App().Name
+	msg.Sender = _msgTarget(App().Name)
 	payload, err := msg.Encode()
 	if err != nil {
 		return err
@@ -167,12 +191,12 @@ func (msg *UniformMessage) Task(target, method string) error {
 		return fmt.Errorf("No NSQ connection")
 	}
 
-	topic := fmt.Sprintf("%s%s", TaskTopicPrefix, target)
+	topic := fmt.Sprintf("%s%s", TaskTopicPrefix, msg.Reciever)
 	err = client.Publish(topic, payload)
 	if err != nil {
-		Logger().Errorf("NSQ publish to <%s>:[%s] failed : %s", target, method, err.Error())
+		Logger().Errorf("NSQ publish to <%s>:[%s] failed : %s", msg.Reciever, method, err.Error())
 	} else {
-		Logger().Debugf("NSQ publish to <%s>:[%s] finished", target, method)
+		Logger().Debugf("NSQ publish to <%s>:[%s] finished", msg.Reciever, method)
 	}
 
 	return err
@@ -180,7 +204,7 @@ func (msg *UniformMessage) Task(target, method string) error {
 
 // Notify : Shout to all instances of service via MQTT
 func (msg *UniformMessage) Notify(target, method string) error {
-	msg.Reciever = target
+	msg.Reciever = _msgTarget(target)
 	msg.Method = method
 	msg.Sender = App().Name
 	payload, err := msg.Encode()
@@ -193,12 +217,12 @@ func (msg *UniformMessage) Notify(target, method string) error {
 		return fmt.Errorf("No NATS connection")
 	}
 
-	topic := fmt.Sprintf("%s%s", NotifyTopicPrefix, target)
+	topic := fmt.Sprintf("%s%s", NotifyTopicPrefix, msg.Reciever)
 	err = client.Publish(topic, payload)
 	if err != nil {
-		Logger().Errorf("NATS publish to <%s>:[%s] failed : %s", target, method, err.Error())
+		Logger().Errorf("NATS publish to <%s>:[%s] failed : %s", msg.Reciever, method, err.Error())
 	} else {
-		Logger().Debugf("NATS publish to <%s>:[%s] finished", target, method)
+		Logger().Debugf("NATS publish to <%s>:[%s] finished", msg.Reciever, method)
 	}
 
 	return err

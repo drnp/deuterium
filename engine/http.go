@@ -398,9 +398,11 @@ func HTTPEnvelope(ctx *fasthttp.RequestCtx, e *HTTPResponseEnvelope) error {
 		e.HTTPStatus = fasthttp.StatusOK
 	}
 
-	if e.Code != 0 && e.Message != "" {
-		Logger().Error(e.Message)
-	}
+	/*
+		if e.Code != 0 && e.Message != "" {
+			Logger().Error(e.Message)
+		}
+	*/
 
 	e.ElapsedTime = e.EndTimestamp - e.StartTimestamp
 

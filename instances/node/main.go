@@ -111,6 +111,8 @@ func main() {
 	nats := engine.NewNatsClient(app.Config().GetString("nats.url"))
 	app.SetNats(nats)
 
+	engine.SetDistinguishBranch(true)
+
 	app.Startup()
 
 	return

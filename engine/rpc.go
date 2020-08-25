@@ -87,9 +87,10 @@ func defaultRPCMux() *http.ServeMux {
 			return
 		}
 
-		if msg.Reciever != App().Name {
+		self := _msgTarget(App().Name)
+		if msg.Reciever != self {
 			// Not you?
-			Logger().Error("Wrong message reciever")
+			Logger().Errorf("RPC : Wrong message reciever : Self <%s> / Reciever <%s>", self, msg.Reciever)
 			w.WriteHeader(http.StatusNotAcceptable)
 
 			return
@@ -219,6 +220,15 @@ func NewRPCClient(addr string) *RPCClient {
 	addr = fmt.Sprintf("%s:%d", addr, RPCTCPPort)
 	client := &RPCClient{
 		addr: addr,
+		client: http.Client{
+			// Ignore SSL (h2c)
+			Transport: &http2.Transport{
+				AllowHTTP: true,
+				DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+					return net.Dial(network, addr)
+				},
+			},
+		},
 	}
 
 	return client
@@ -227,15 +237,6 @@ func NewRPCClient(addr string) *RPCClient {
 // Call : Call RPC
 /* {{{ [RPCClient::Call] */
 func (c *RPCClient) Call(payload []byte) (*ResultMessage, error) {
-	c.client = http.Client{
-		// Ignore SSL (h2c)
-		Transport: &http2.Transport{
-			AllowHTTP: true,
-			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
-				return net.Dial(network, addr)
-			},
-		},
-	}
 	resp, err := c.client.Post("http://"+c.addr, "application/msgpack", bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
@@ -243,7 +244,7 @@ func (c *RPCClient) Call(payload []byte) (*ResultMessage, error) {
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
+	if resp.StatusCode < 400 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
@@ -255,9 +256,9 @@ func (c *RPCClient) Call(payload []byte) (*ResultMessage, error) {
 		return r, nil
 	}
 
-	Logger().Debugf("RPC call response with status %d", resp.StatusCode)
+	//Logger().Debugf("RPC call response with status %d", resp.StatusCode)
 
-	return nil, fmt.Errorf("Invalid RPC call")
+	return nil, fmt.Errorf("Invalid RPC call, response with HTTP status %d", resp.StatusCode)
 }
 
 /* }}} */

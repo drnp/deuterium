@@ -31,48 +31,57 @@
 
 package engine
 
-import (
-	"sync"
-	"sync/atomic"
-)
-
 var (
 	scheduleChans    = make(map[string]chan *UniformMessage)
 	scheduleRoutines = make(map[string]bool)
 )
 
 func _rtSchedule(h *UniformMsgHandler, ch chan *UniformMessage) {
-	var (
-		running int64
-		wg      sync.WaitGroup
-	)
+	var i int64
+	for i = 0; i < h.concurrency; i++ {
+		go func() {
+			for msg := range ch {
+				if msg == nil {
+					break
+				}
 
-	for msg := range ch {
-		if msg == nil {
-			break
-		}
-
-		// Task
-		atomic.AddInt64(&running, 1)
-		if running >= h.concurrency {
-			wg.Add(1)
-		}
-
-		go func(msg *UniformMessage) {
-			_, err := h.hdr(msg)
-			if err != nil {
-				Logger().Error(err)
+				h.hdr(msg)
 			}
-
-			if running >= h.concurrency {
-				wg.Done()
-			}
-
-			atomic.AddInt64(&running, -1)
-		}(msg)
-
-		wg.Wait()
+		}()
 	}
+	/*
+		var (
+			running int64
+			wg      sync.WaitGroup
+		)
+
+		for msg := range ch {
+			if msg == nil {
+				break
+			}
+
+			// Task
+			atomic.AddInt64(&running, 1)
+			if running >= h.concurrency {
+				wg.Add(1)
+			}
+
+			go func(msg *UniformMessage) {
+				_, err := h.hdr(msg)
+				if err != nil {
+					Logger().Error(err)
+				}
+
+				if running >= h.concurrency {
+					wg.Done()
+				}
+
+				atomic.AddInt64(&running, -1)
+			}(msg)
+
+			wg.Wait()
+		}
+	*/
 
 	return
 }
@@ -84,22 +93,6 @@ func runHandler(h *UniformMsgHandler, msg *UniformMessage) {
 	}
 
 	if h.concurrency > 0 {
-		// Buffered
-		/*
-			scheduler := fmt.Sprintf("%s@%d", h.method, h.concurrency)
-			ch := scheduleChans[scheduler]
-			if ch == nil {
-				ch = make(chan *UniformMessage, h.concurrency)
-				scheduleChans[scheduler] = ch
-			}
-
-			// Try routine
-			if !scheduleRoutines[scheduler] {
-				go _rtSchedule(h, ch)
-			}
-
-			ch <- msg
-		*/
 		ch := scheduleChans[h.method]
 		if ch == nil {
 			ch = make(chan *UniformMessage)

@@ -63,7 +63,7 @@ func serv(ctx *fasthttp.RequestCtx) {
 	msg.Notify("deuterium.skel.node", "notify")
 	r, err := msg.Call("deuterium.skel.node", "myName")
 	if err != nil {
-		engine.Logger().Error(err)
+		//engine.Logger().Error(err)
 		e.Message = err.Error()
 		e.HTTPStatus = fasthttp.StatusInternalServerError
 		e.Code = 1023
@@ -107,6 +107,7 @@ func main() {
 	app.SetNats(nats)
 
 	app.Metrics().Counter("test_counter").Add(100)
+	engine.SetDistinguishBranch(true)
 
 	app.Startup()
 

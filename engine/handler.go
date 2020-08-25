@@ -65,6 +65,8 @@ func RegisterHandler(method string, handler UniformHandlerFunc, cv ...int64) {
 		concurrency: c,
 	}
 
+	Logger().Debugf("Register handler <%s> with concurrency %d", method, c)
+
 	return
 }
 

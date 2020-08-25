@@ -104,10 +104,10 @@ func (n *NsqClient) Subscribe(topic, channel string, handler nsq.Handler, concur
 	}
 
 	if concurrency > 1 {
-		Logger().Debugf("Add consumer with concurrency %d", concurrency)
+		//Logger().Debugf("Add consumer with concurrency %d", concurrency)
 		consumer.AddConcurrentHandlers(handler, concurrency)
 	} else {
-		Logger().Debug("Add single consumer")
+		//Logger().Debug("Add single consumer")
 		consumer.AddHandler(handler)
 	}
 

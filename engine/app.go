@@ -222,14 +222,24 @@ func (app *AppIns) Startup() {
 
 	if app.nsq != nil {
 		// Subscribe
-		topic := fmt.Sprintf("%s%s", TaskTopicPrefix, app.Name)
-		app.nsq.Subscribe(topic, TaskTopicPrefix, &_taskNsqConsumerHandler{}, app.nWorkers)
+		topic := fmt.Sprintf("%s%s", TaskTopicPrefix, _msgTarget(app.Name))
+		err := app.nsq.Subscribe(topic, TaskTopicPrefix, &_taskNsqConsumerHandler{}, app.nWorkers)
+		if err != nil {
+			app.logger.Error(err)
+		} else {
+			app.logger.Debugf("NSQ subscribed to <%s>", topic)
+		}
 	}
 
 	if app.nats != nil {
 		// Subscribe
-		topic := fmt.Sprintf("%s%s", NotifyTopicPrefix, app.Name)
-		app.nats.Subscribe(topic, _notifyNatsConsumerHandler)
+		topic := fmt.Sprintf("%s%s", NotifyTopicPrefix, _msgTarget(app.Name))
+		_, err := app.nats.Subscribe(topic, _notifyNatsConsumerHandler)
+		if err != nil {
+			app.logger.Error(err)
+		} else {
+			app.logger.Debugf("NATS subscribed to <%s>", topic)
+		}
 	}
 
 	if app.rpc != nil {

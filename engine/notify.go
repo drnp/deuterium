@@ -46,9 +46,10 @@ func _notifyNatsConsumerHandler(m *nats.Msg) {
 		return
 	}
 
-	if msg.Reciever != App().Name {
+	self := _msgTarget(App().Name)
+	if msg.Reciever != self {
 		// Not you?
-		err = fmt.Errorf("Wrong message reciever")
+		err = fmt.Errorf("Notify : Wrong message reciever : Self <%s> / Reciever <%s>", self, msg.Reciever)
 		Logger().Error(err)
 
 		return
@@ -62,16 +63,6 @@ func _notifyNatsConsumerHandler(m *nats.Msg) {
 		return
 	}
 
-	/*
-		ret, err := t(msg)
-		if ret == nil {
-			ret = NewResultMessage(nil, false)
-		}
-
-		if err != nil {
-			Logger().Error(err)
-		}
-	*/
 	runHandler(h, msg)
 
 	return
