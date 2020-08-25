@@ -3,9 +3,6 @@ module github.com/drnp/deuterium
 go 1.14
 
 require (
-	github.com/DataDog/sketches-go v0.0.0-20190923095040-43f19ad77ff7 // indirect
-	github.com/benbjohnson/clock v1.0.3 // indirect
-	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/fasthttp/router v1.3.1
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
@@ -37,11 +34,9 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	go.opentelemetry.io/otel v0.11.0 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
-	golang.org/x/exp v0.0.0-20200821190819-94841d0725da // indirect
 	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	golang.org/x/sys v0.0.0-20200824131525-c12d262b63d8 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
-	google.golang.org/grpc v1.31.0 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/ini.v1 v1.60.1 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
