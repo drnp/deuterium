@@ -47,7 +47,7 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"upper.io/db.v3/lib/sqlbuilder"
+	"github.com/upper/db/v4"
 )
 
 // Application modes
@@ -95,7 +95,7 @@ type AppIns struct {
 	http    *HTTPServer
 	metrics *MetricsIns
 	rpc     *RPCServer
-	db      sqlbuilder.Database
+	db      db.Session
 	redis   *redis.Client
 	nsq     *NsqClient
 	nats    *nats.Conn
@@ -206,8 +206,8 @@ func (app *AppIns) Startup() {
 	}
 
 	if app.db != nil {
-		dl := &dbLogger{logger: app.Logger()}
-		app.db.SetLogger(dl)
+		//dl := &dbLogger{logger: app.Logger()}
+		//app.db.SetLogger(dl)
 		err := app.db.Ping()
 		if err != nil {
 			app.Logger().Errorf("Database instance connection error : %s", err.Error())
@@ -424,7 +424,7 @@ func (app *AppIns) SetRPC(rpc *RPCServer) {
 
 // SetDB : Set database instance
 /* {{{ [AppIns::SetDB] */
-func (app *AppIns) SetDB(db sqlbuilder.Database) {
+func (app *AppIns) SetDB(db db.Session) {
 	app.db = db
 	if _defaultDatabaseInstance == nil {
 		_defaultDatabaseInstance = db
@@ -507,7 +507,7 @@ func (app *AppIns) Metrics() *MetricsIns {
 }
 
 // DB : Get database
-func (app *AppIns) DB() sqlbuilder.Database {
+func (app *AppIns) DB() db.Session {
 	return app.db
 }
 
@@ -540,7 +540,7 @@ var (
 	_defaultCronnerInstance  *cron.Cron
 	_defaultLoggerInstance   *logrus.Logger
 	_defaultConfigInstance   *viper.Viper
-	_defaultDatabaseInstance sqlbuilder.Database
+	_defaultDatabaseInstance db.Session
 	_defaultRedisInstance    *redis.Client
 	_defaultNsqInstance      *NsqClient
 	_defaultNatsInstance     *nats.Conn
@@ -572,7 +572,7 @@ func Config() *viper.Viper {
 }
 
 // DB : Get default database instance
-func DB() sqlbuilder.Database {
+func DB() db.Session {
 	return _defaultDatabaseInstance
 }
 

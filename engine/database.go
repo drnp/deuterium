@@ -32,26 +32,24 @@
 package engine
 
 import (
-	"github.com/sirupsen/logrus"
-	"upper.io/db.v3"
-	"upper.io/db.v3/lib/sqlbuilder"
-	"upper.io/db.v3/mysql"
-	"upper.io/db.v3/postgresql"
-	"upper.io/db.v3/sqlite"
+	"github.com/upper/db/v4"
+	"github.com/upper/db/v4/adapter/mysql"
+	"github.com/upper/db/v4/adapter/postgresql"
+	"github.com/upper/db/v4/adapter/sqlite"
 )
 
 // NewDatabase : Create upper instance
 /* {{{ [NewDatabase] */
-func NewDatabase(dbtype, host, db, user, pass string) (sqlbuilder.Database, error) {
+func NewDatabase(dbtype, host, database, user, pass string) (db.Session, error) {
 	var (
-		conn sqlbuilder.Database
+		conn db.Session
 		err  error
 	)
 
 	switch dbtype {
 	case "postgresql":
 		settings := postgresql.ConnectionURL{
-			Database: db,
+			Database: database,
 			Host:     host,
 			User:     user,
 			Password: pass,
@@ -60,7 +58,7 @@ func NewDatabase(dbtype, host, db, user, pass string) (sqlbuilder.Database, erro
 		conn, err = postgresql.Open(settings)
 	case "mysql":
 		settings := mysql.ConnectionURL{
-			Database: db,
+			Database: database,
 			Host:     host,
 			User:     user,
 			Password: pass,
@@ -69,16 +67,18 @@ func NewDatabase(dbtype, host, db, user, pass string) (sqlbuilder.Database, erro
 		conn, err = mysql.Open(settings)
 	case "sqlite":
 		settings := sqlite.ConnectionURL{
-			Database: db,
+			Database: database,
 		}
 
 		conn, err = sqlite.Open(settings)
 	}
+
 	return conn, err
 }
 
 /* }}} */
 
+/*
 // dbLogger : Database logger implemetation
 type dbLogger struct {
 	logger *logrus.Entry
@@ -87,6 +87,7 @@ type dbLogger struct {
 func (l *dbLogger) Log(q *db.QueryStatus) {
 	l.logger.Print(q.Query)
 }
+*/
 
 /*
  * Local variables:
