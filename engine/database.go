@@ -32,6 +32,8 @@
 package engine
 
 import (
+	"strings"
+
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/mysql"
 	"github.com/upper/db/v4/adapter/postgresql"
@@ -40,7 +42,7 @@ import (
 
 // NewDatabase : Create upper instance
 /* {{{ [NewDatabase] */
-func NewDatabase(dbtype, host, database, user, pass string) (db.Session, error) {
+func NewDatabase(dbtype, host, database, user, pass string, options ...bool) (db.Session, error) {
 	var (
 		conn db.Session
 		err  error
@@ -53,6 +55,9 @@ func NewDatabase(dbtype, host, database, user, pass string) (db.Session, error) 
 			Host:     host,
 			User:     user,
 			Password: pass,
+		}
+		if options[0] {
+			settings.Options["sslmode"] = "require"
 		}
 
 		conn, err = postgresql.Open(settings)
@@ -74,6 +79,39 @@ func NewDatabase(dbtype, host, database, user, pass string) (db.Session, error) 
 	}
 
 	return conn, err
+}
+
+/* }}} */
+
+// SetDatabaseDebugLevel : Set debug level for upper globally
+/* {{{ [SetDatabaseDebugLevel] */
+func SetDatabaseDebugLevel(level string) {
+	switch strings.ToLower(level) {
+	case "trace":
+		db.LC().SetLevel(db.LogLevelTrace)
+	case "debug":
+		db.LC().SetLevel(db.LogLevelDebug)
+	case "info":
+		db.LC().SetLevel(db.LogLevelInfo)
+	case "warn":
+		db.LC().SetLevel(db.LogLevelWarn)
+	case "error":
+		db.LC().SetLevel(db.LogLevelError)
+	case "fatal":
+		db.LC().SetLevel(db.LogLevelFatal)
+	case "panic":
+		db.LC().SetLevel(db.LogLevelPanic)
+	default:
+		// Do nothing
+	}
+}
+
+/* }}} */
+
+// SetDatabaseLogger : Set logger for upper globally
+/* {{{ [SetDatabaseLogger] */
+func SetDatabaseLogger(logger db.Logger) {
+	db.LC().SetLogger(logger)
 }
 
 /* }}} */
