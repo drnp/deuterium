@@ -57,9 +57,8 @@ func NewDatabase(dbtype, host, database, user, pass string, options ...bool) (db
 			Password: pass,
 		}
 		if options[0] {
-			settings.Options = map[string]string{
-				"sslmode": "require",
-			}
+			settings.Options = make(map[string]string)
+			settings.Options["sslmode"] = "require"
 		}
 
 		conn, err = postgresql.Open(settings)
