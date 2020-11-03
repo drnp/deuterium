@@ -37,12 +37,13 @@ import (
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/mysql"
 	"github.com/upper/db/v4/adapter/postgresql"
+	"github.com/upper/db/v4/adapter/ql"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
 
 // NewDatabase : Create upper instance
 /* {{{ [NewDatabase] */
-func NewDatabase(dbtype, host, database, user, pass string, options ...bool) (db.Session, error) {
+func NewDatabase(dbtype, host, database, user, pass string, options ...map[string]string) (db.Session, error) {
 	var (
 		conn db.Session
 		err  error
@@ -56,9 +57,8 @@ func NewDatabase(dbtype, host, database, user, pass string, options ...bool) (db
 			User:     user,
 			Password: pass,
 		}
-		if options[0] {
-			settings.Options = make(map[string]string)
-			settings.Options["sslmode"] = "require"
+		if options != nil && options[0] != nil {
+			settings.Options = options[0]
 		}
 
 		conn, err = postgresql.Open(settings)
@@ -69,14 +69,29 @@ func NewDatabase(dbtype, host, database, user, pass string, options ...bool) (db
 			User:     user,
 			Password: pass,
 		}
+		if options != nil && options[0] != nil {
+			settings.Options = options[0]
+		}
 
 		conn, err = mysql.Open(settings)
 	case "sqlite":
 		settings := sqlite.ConnectionURL{
 			Database: database,
 		}
+		if options != nil && options[0] != nil {
+			settings.Options = options[0]
+		}
 
 		conn, err = sqlite.Open(settings)
+	case "ql":
+		settings := ql.ConnectionURL{
+			Database: database,
+		}
+		if options != nil && options[0] != nil {
+			settings.Options = options[0]
+		}
+
+		conn, err = ql.Open(settings)
 	}
 
 	return conn, err
