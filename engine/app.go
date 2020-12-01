@@ -70,9 +70,16 @@ const (
 	logFieldAppName = "_app"
 )
 
+// Runtime branch
+const (
+	BranchEnvName      = "BRANCH"
+	DefaultBranchValue = "master"
+)
+
 var (
-	apps    = make(map[string]*AppIns)
-	appName string
+	apps         = make(map[string]*AppIns)
+	appName      string
+	enableBranch bool
 )
 
 // RunnerWorker : Worker function
@@ -124,16 +131,6 @@ func NewApp(name string) *AppIns {
 		cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
 	)))
 	_defaultLoggerInstance = logrus.New()
-	_defaultConfigInstance = viper.New()
-
-	_defaultConfigInstance.SetConfigName(appName)
-	_defaultConfigInstance.SetEnvPrefix(appName)
-	_defaultConfigInstance.AutomaticEnv()
-	_defaultConfigInstance.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	_defaultConfigInstance.AddConfigPath(fmt.Sprintf("$HOME/.%s", appName))
-	_defaultConfigInstance.AddConfigPath(fmt.Sprintf("/etc/%s", appName))
-	_defaultConfigInstance.AddConfigPath(".")
-
 	app := &AppIns{
 		Name:      appName,
 		cronner:   _defaultCronnerInstance,
@@ -351,6 +348,11 @@ func (app *AppIns) LoadConfig() {
 // ReloadConfig : Reload configuration
 /* {{{ [AppIns::ReloadConfig] */
 func (app *AppIns) ReloadConfig() {
+	err := app.Config().ReadInConfig()
+	if err != nil {
+		app.Logger().Error(err)
+	}
+
 	return
 }
 
@@ -498,6 +500,10 @@ func (app *AppIns) Logger() *logrus.Entry {
 
 // Config : Get config
 func (app *AppIns) Config() *viper.Viper {
+	if app.config == nil {
+		app.config = ensureDefaultConfig(app.Name, enableBranch)
+	}
+
 	return app.config
 }
 
@@ -568,7 +574,11 @@ func Logger() *logrus.Entry {
 
 // Config : Get default viper config instance
 func Config() *viper.Viper {
-	return _defaultConfigInstance
+	if _defaultAppInstance == nil {
+		return nil
+	}
+
+	return ensureDefaultConfig(_defaultAppInstance.Name, enableBranch)
 }
 
 // DB : Get default database instance
@@ -594,6 +604,50 @@ func Nats() *nats.Conn {
 // Debug : Get debug status of default app instance
 func Debug() bool {
 	return _defaultAppInstance.Debug
+}
+
+/* }}} */
+
+/* {{{ [Helpers] */
+// ensureDefaultConfig
+func ensureDefaultConfig(appName string, enableBranch bool) *viper.Viper {
+	if _defaultConfigInstance == nil {
+		_defaultConfigInstance = viper.New()
+		if enableBranch {
+			branch := os.Getenv(BranchEnvName)
+			if branch == "" {
+				branch = DefaultBranchValue
+			}
+
+			_defaultConfigInstance.SetConfigName(appName + "_" + branch)
+			_defaultConfigInstance.SetEnvPrefix(appName + "_" + branch)
+		} else {
+			_defaultConfigInstance.SetConfigName(appName)
+			_defaultConfigInstance.SetEnvPrefix(appName)
+		}
+
+		_defaultConfigInstance.AutomaticEnv()
+		_defaultConfigInstance.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+		_defaultConfigInstance.AddConfigPath(fmt.Sprintf("$HOME/.%s", appName))
+		_defaultConfigInstance.AddConfigPath(fmt.Sprintf("/etc/%s", appName))
+		_defaultConfigInstance.AddConfigPath(".")
+	}
+
+	return _defaultConfigInstance
+}
+
+// EnableBranch : Set enableBranch globally
+func EnableBranch() bool {
+	enableBranch = true
+
+	return true
+}
+
+// DisableBranch : Set enableBranch globally
+func DisableBranch() bool {
+	enableBranch = false
+
+	return false
 }
 
 /* }}} */
