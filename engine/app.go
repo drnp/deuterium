@@ -367,7 +367,7 @@ func (app *AppIns) SetDefaultConfig(defaults map[string]interface{}) error {
 
 	for k, v := range defaults {
 		if v != nil {
-			app.config.SetDefault(k, v)
+			app.Config().SetDefault(k, v)
 		}
 	}
 
@@ -385,7 +385,7 @@ func (app *AppIns) SetConfigs(c map[string]interface{}) error {
 
 	for k, v := range c {
 		if v != nil {
-			app.config.Set(k, v)
+			app.Config().Set(k, v)
 		}
 	}
 
