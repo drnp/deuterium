@@ -242,7 +242,10 @@ func (c *RPCClient) Call(payload []byte) (*ResultMessage, error) {
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		resp.Body.Close()
+		c.client.CloseIdleConnections()
+	}()
 
 	if resp.StatusCode < 400 {
 		body, err := ioutil.ReadAll(resp.Body)
