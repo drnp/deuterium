@@ -137,7 +137,7 @@ func (msg *UniformMessage) Length() int {
 // Service-to-service methods
 
 func _msgTarget(target string) string {
-	if enableBranch == true {
+	if enableBranch == true && distinguishBranch == true {
 		branch := os.Getenv(BranchEnvName)
 		if branch == "" {
 			branch = DefaultBranchValue

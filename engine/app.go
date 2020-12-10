@@ -70,10 +70,14 @@ const (
 	logFieldAppName = "_app"
 )
 
-// Runtime branch
+// Runtime envs
 const (
-	BranchEnvName      = "BRANCH"
-	DefaultBranchValue = "master"
+	BranchEnvName         = "BRANCH"
+	DefaultBranchValue    = "master"
+	LogLevelEnvName       = "LOG_LEVEL"
+	DefaultLogLevelValue  = "debug"
+	LogFormatEnvName      = "LOG_FORMAT"
+	DefaultLogFormatValue = "text"
 )
 
 var (
@@ -114,7 +118,7 @@ type AppIns struct {
 	//workerFunc RunnerWorker
 	nWorkers int
 
-	LogLevel  logrus.Level
+	LogLevel  string
 	LogFormat string
 	Debug     bool
 }
@@ -127,25 +131,77 @@ func NewApp(name string) *AppIns {
 	)
 
 	appName = strings.ToLower(name)
-	_defaultCronnerInstance = cron.New(cron.WithParser(cron.NewParser(
-		cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
-	)))
-	_defaultLoggerInstance = logrus.New()
+	/*
+		_defaultCronnerInstance = cron.New(cron.WithParser(cron.NewParser(
+			cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+		)))
+		_defaultLoggerInstance = logrus.New()
+	*/
 	app := &AppIns{
-		Name:      appName,
-		cronner:   _defaultCronnerInstance,
-		logger:    _defaultLoggerInstance,
+		Name: appName,
+		//cronner:   _defaultCronnerInstance,
+		//logger:    _defaultLoggerInstance,
 		config:    _defaultConfigInstance,
 		waiter:    &w,
 		goProcs:   runtime.NumCPU() * 4,
 		running:   true,
-		LogLevel:  logrus.DebugLevel,
-		LogFormat: LogFormatText,
+		LogLevel:  DefaultLogLevelValue,
+		LogFormat: DefaultLogFormatValue,
 		nWorkers:  1,
 	}
-	_defaultAppInstance = app
+
+	app.cronner = cron.New(cron.WithParser(cron.NewParser(
+		cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+	)))
+	if _defaultCronnerInstance == nil {
+		_defaultCronnerInstance = app.cronner
+	}
+
+	app.logger = logrus.New()
+	logLevel := os.Getenv(LogLevelEnvName)
+	if logLevel == "" {
+		logLevel = DefaultLogLevelValue
+	}
+
+	switch strings.ToLower(logLevel) {
+	case "panic":
+		app.LogLevel = "panic"
+		app.logger.SetLevel(logrus.PanicLevel)
+	case "fatal":
+		app.LogLevel = "fatal"
+		app.logger.SetLevel(logrus.FatalLevel)
+	case "error":
+		app.LogLevel = "error"
+		app.logger.SetLevel(logrus.ErrorLevel)
+	case "warn":
+		app.LogLevel = "warn"
+		app.logger.SetLevel(logrus.WarnLevel)
+	case "info":
+		app.LogLevel = "info"
+		app.logger.SetLevel(logrus.InfoLevel)
+	case "debug":
+		app.LogLevel = "debug"
+		app.logger.SetLevel(logrus.DebugLevel)
+	case "trace":
+		app.LogLevel = "trace"
+		app.logger.SetLevel(logrus.TraceLevel)
+	}
+
+	logFormat := os.Getenv(LogFormatEnvName)
+	if logFormat == "" {
+		logFormat = DefaultLogFormatValue
+	}
+
+	app.LogFormat = strings.ToLower(logFormat)
+
+	if _defaultLoggerInstance == nil {
+		_defaultLoggerInstance = app.logger
+	}
+
 	apps[appName] = app
-	app.logger.SetLevel(app.LogLevel)
+	if _defaultAppInstance == nil {
+		_defaultAppInstance = app
+	}
 
 	return app
 }
