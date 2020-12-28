@@ -58,6 +58,11 @@ func SetDistinguishBranch(d bool) {
 	distinguishBranch = d
 }
 
+// GetDistinguishBranch : Get distinguish branch
+func GetDistinguishBranch() bool {
+	return distinguishBranch
+}
+
 // UniformMessage : Uniform message type for task / RPC / broadcast
 type UniformMessage struct {
 	ID       string
@@ -135,7 +140,6 @@ func (msg *UniformMessage) Length() int {
 }
 
 // Service-to-service methods
-
 func _msgTarget(target string) string {
 	if enableBranch == true && distinguishBranch == true {
 		branch := os.Getenv(BranchEnvName)
